@@ -3,11 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work to Time</title>
+    <title>Dynamic Work Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .top-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .time-summary {
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        textarea {
+            width: 100%;
+            resize: none;
+            overflow: hidden;
+            line-height: 1.5em;
+            height: 1.5em; /* Single-line height */
+        }
+        input[type="number"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .output-container {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Current Date and Time</h1>
-    <p>Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2026-03-13 15:29:06</p>
-    <p>Current User's Login: pwnyanshu</p>
+    <div class="top-summary">
+        <h2>Dynamic Work Tracker</h2>
+        <div class="time-summary">
+            <span id="filledTime">Total Time Filled: 0 hrs</span><br>
+            <span id="remainingTime">Remaining: 8 hrs</span>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 70%;">Work Done</th>
+                <th style="width: 10%;">Hours</th>
+                <th style="width: 10%;">Minutes</th>
+                <th style="width: 10%;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="workTableBody">
+            <tr>
+                <td><textarea oninput="updateOutput()"></textarea></td>
+                <td><input type="number" min="0" max="8" step="1" placeholder="Hrs" oninput="updateOutput()"></td>
+                <td><input type="number" min="0" max="59" step="1" placeholder="Mins" oninput="updateOutput()"></td>
+                <td>
+                    <button onclick="addRow()">Add</button>
+                    <button onclick="removeRow(this)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="output-container">
+        <h4>Generated Output:</h4>
+        <p id="output">No work entered yet.</p>
+        <button onclick="copyToClipboard('output')">Copy Output</button>
+        <h4>Total Hours Filled:</h4>
+        <p id="totalHours">0.00</p>
+        <button onclick="copyToClipboard('totalHours')">Copy Total Hours</button>
+    </div>
+    <script>
+        function addRow() {
+            const tableBody = document.getElementById("workTableBody");
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td><textarea oninput="updateOutput()"></textarea></td>
+                <td><input type="number" min="0" max="8" step="1" placeholder="Hrs" oninput="updateOutput()"></td>
+                <td><input type="number" min="0" max="59" step="1" placeholder="Mins" oninput="updateOutput()"></td>
+                <td>
+                    <button onclick="addRow()">Add</button>
+                    <button onclick="removeRow(this)">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function removeRow(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
+            updateOutput();
+        }
+
+        function updateOutput() {
+    const rows = document.querySelectorAll("#workTableBody tr");
+    let output = "";
+    let totalMinutes = 0;
+
+    rows.forEach(row => {
+        const work = row.querySelector("textarea").value.trim(); // Get work description from textarea
+        const hoursInput = row.querySelector("input[type='number'][placeholder='Hrs']");
+        const minutesInput = row.querySelector("input[type='number'][placeholder='Mins']");
+
+        const hours = parseFloat(hoursInput?.value || 0);
+        const minutes = parseFloat(minutesInput?.value || 0);
+
+        if (work) { // Only add work if there's something in the textarea
+            let workText = work; // Use the content of the textarea
+
+            if (hours > 0 && minutes > 0) {
+                workText += ` (${hours} hr ${minutes} min)`; // Both hours and minutes
+            } else if (hours > 0) {
+                workText += ` (${hours} hr)`; // Only hours
+            } else if (minutes > 0) {
+                workText += ` (${minutes} min)`; // Only minutes
+            }
+
+            output += `${workText}, `;
+            totalMinutes += (hours * 60) + minutes; // Calculate total minutes correctly
+        }
+    });
+
+    // Convert total minutes into decimal hours
+    const totalHours = (totalMinutes / 60).toFixed(2); // Convert minutes to decimal hours
+
+    // Calculate remaining time in decimal hours
+    const remainingTime = Math.max(0, 480 - totalMinutes); // 8 hours = 480 minutes
+    const remainingHours = (remainingTime / 60).toFixed(2);
+
+    // Update Generated Output
+    document.getElementById("output").innerText = output ? output.slice(0, -2) : "No work entered yet."; // Remove trailing comma
+    document.getElementById("totalHours").innerText = totalHours;
+
+    // Update Time Summary in decimal format (e.g., 3.50)
+    document.getElementById("filledTime").innerText = `Total Time: ${totalHours} hrs`;
+    document.getElementById("remainingTime").innerText = `Remaining for 8 hrs: ${remainingHours} hrs`;
+}
+
+
+
+
+
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text)
+                .then()
+                .catch(err => alert("Failed to copy text: " + err));
+        }
+    </script>
 </body>
 </html>
